@@ -1,3 +1,8 @@
-import AuthRouter from "@/modules/auth/index.js";
+import {AuthRouter, api} from "@/modules/auth/index.js";
+import {Router} from "express";
 
-export { AuthRouter };
+const router = Router();
+
+router.use(api, AuthRouter);
+
+export default router;
