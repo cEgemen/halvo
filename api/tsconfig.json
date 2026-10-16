@@ -12,7 +12,10 @@
     "resolveJsonModule": true,
     "verbatimModuleSyntax": true,
     "sourceMap": true,
-    "types": ["node"]
+    "types": ["node"],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["src"]
 }
