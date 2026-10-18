@@ -1,33 +1,47 @@
 import app from "./app.js";
 import http from "http";
+import { connectRedis, disconnectRedis } from "@/configs/redis.config.js";
 
-const port = Number(process.env.PORT) || 3000;
+const port = Number(process.env.PORT) || 3002;
 
 const server = http.createServer(app);
 
-server.listen(port, () => {
-  console.log(`API listening on http://localhost:${port}`);
-});
+const startServer = async () => {
+  try {
+    await connectRedis();
+  } catch (error) {
+    console.error(`Failed to connect Redis: ${error}`);
+    await disconnectRedis();
+    process.exit(1);
+  }
 
-const closeServer = () => {
-  console.log("Server closed");
-  process.exit(0);
+  server.listen(port, () => {
+    console.log(`API listening on http://localhost:${port}`);
+  });
 };
 
-server.on("error", (error) => {
+let isShuttingDown = false;
+
+const shutdown = (signal: NodeJS.Signals) => {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+
+  console.log(`${signal} received, closing server gracefully`);
+
+  server.close(async () => {
+    console.log("Server closed");
+    await disconnectRedis();
+    process.exit(0);
+  });
+};
+
+server.on("error", async (error) => {
   console.error(`API error: ${error}`);
+  await disconnectRedis();
+  process.exit(1);
 });
 
-process.on("SIGTERM", () => {
-  console.log("SIGTERM received, closing server gracefully");
-  server.close(() => {
-    closeServer();
-  });
-});
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
 
-process.on("SIGINT", () => {
-  console.log("SIGINT received, closing server gracefully");
-  server.close(() => {
-    closeServer();
-  });
-});
+startServer();
