@@ -74,7 +74,25 @@ const login = async (loginData: any) => {
 }
 
 const refresh = async (refreshToken: string) => {
-
+   try {
+     const {sub,jti} = await verifyRefreshToken(refreshToken)
+     const stored = await redis.get(`refresh:${sub}:${jti}`)
+     if(!stored)
+       {
+        // throw atılacak
+       }
+       const newAccessToken = await signAccessToken(sub)
+       const newRefreshToken = await signRefreshToken(sub)
+       
+       await redis.del(`refresh:${sub}:${jti}`)
+       const {exp} = await verifyRefreshToken(newRefreshToken)
+       const ttl = exp - Math.floor(Date.now()/1000)
+       await redis.set(`refresh:${sub}:${newRefreshToken}`,"1","EX",ttl)
+       
+       return {newAccessToken,newRefreshToken}
+   } catch (error) {
+     // throw atılacak
+   }
 }
 
 const logout = async (refreshToken: string) => {

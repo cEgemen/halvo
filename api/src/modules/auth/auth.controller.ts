@@ -15,7 +15,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 
 const refresh = async (req: Request, res: Response, next: NextFunction) => {
     const { body } = req
-    await authService.refresh(body)
+    const result = await authService.refresh(body)
     return res.json({ success: true, message: "Refresh is success" })
 };
 
